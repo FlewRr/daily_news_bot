@@ -19,7 +19,7 @@ Telegram bot based on the nytimes API for receiving news.
   docker build -t app .
   docker run -e BOT_TOKEN=<BOT_TOKEN> -e API_TOKEN=<API_TOKEN> -p 9000:80 -t app 
 ```
-or
+        or
 ```
   docker-compose up -d  ## to build and run
   docker-compose down  ## to stop
