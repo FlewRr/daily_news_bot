@@ -1,0 +1,17 @@
+version: '3.10'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: app
+    restart: always
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - API_TOKEN=${API_TOKEN}
+    ports:
+      - 80:80
+    volumes:
+      - ./app:/usr/src/app/app
+      - ./migrations:/usr/src/app/migrations
