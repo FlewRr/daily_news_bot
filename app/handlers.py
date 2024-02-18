@@ -43,6 +43,6 @@ async def choose_topic(message: types.Message, state: FSMContext):
         await message.answer("Sorry, I need the number, not what you've just said")
         return
     else:
-        news_text = get_news_by_topics(db, np.random.randint(1, 10), int(message.text))
+        news_text = get_news_by_topics(db, int(message.text))
         await message.answer(news_text)
         await welcome(message, state)
