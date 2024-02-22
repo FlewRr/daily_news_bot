@@ -7,6 +7,7 @@ from app.ml.database.db import get_news_by_topics
 import json 
 from app.loader import db, dp, topics_
 from app.ml.language_model import WMT19 
+import torch
 
 model = WMT19("facebook/wmt19-en-ru")
 
@@ -23,13 +24,24 @@ async def about(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=States.work)
 async def start(message: types.Message, state: FSMContext):
-    if message.text == 'Get news' or message.text == 'Get_news [ru]':
+    if message.text == 'Get news':
         await States.choose_topic.set()
-        global ru_flag
-        ru_flag = False
-        if message.text == 'Get_news [ru]':
-            ru_flag = True
         topics = [f"{x} : {y}" for x, y in topics_.items()]
+        topics_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        if len(topics) % 2 == 0:
+            for i in range(1, len(topics)+1, 2):
+                topics_keyboard.row(KeyboardButton(str(i)), KeyboardButton(str(i+1)))
+        else:
+            for i in range(1, len(topics), 2):
+                topics_keyboard.row(KeyboardButton(str(i)), KeyboardButton(str(i+1)))
+            topics_keyboard.row(KeyboardButton(str(len(topics))))
+        
+        s = "\n".join([element for element in topics])
+        await message.answer(f"Choose one of the topics: {s}", reply_markup=topics_keyboard)
+    elif message.text == "Get news [ru]":
+        print("Get news ru")
+        await States.choose_topic_ru.set()
+        topics = [f"{x} : {model.translate(y)}" for x, y in topics_.items()]
         topics_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         if len(topics) % 2 == 0:
             for i in range(1, len(topics)+1, 2):
@@ -51,7 +63,15 @@ async def choose_topic(message: types.Message, state: FSMContext):
         return
     else:
         news_text = get_news_by_topics(db, int(message.text))
-        if ru_flag:
-            news_text = model.translate(news_text)
         await message.answer(news_text)
+        await welcome(message, state)
+
+@dp.message_handler(state=States.choose_topic_ru)
+async def choose_topic(message: types.Message, state: FSMContext):
+    if not message.text.isdigit() or int(message.text) > len(topics_) or int(message.text) < 1:
+        await message.answer("Sorry, I need the number, not what you've just said")
+        return
+    else:
+        news_text = get_news_by_topics(db, int(message.text))
+        await message.answer(model.translate(news_text))
         await welcome(message, state)
